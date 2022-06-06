@@ -1,0 +1,578 @@
+---
+title: 'Práctica 2: Limpieza y validación de los datos'
+author: "Autores: Mejía Quintero Dayana, Peterson Christopher"
+date: "Junio 2022"
+output:
+  html_document:
+    highlight: default
+    number_sections: yes
+    theme: cosmo
+    toc: yes
+    toc_depth: 2
+    includes:
+      in_header: PEC-header.html
+  word_document: default
+  pdf_document:
+    highlight: zenburn
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+******
+# COMPETENCIAS DE LA PRACTICA
+
+En esta práctica se desarrollan las siguientes competencias del Máster de Data Science:
+- Capacidad de analizar un problema en el nivel de abstracción adecuado a cada situación y aplicar las habilidades y conocimientos adquiridos para abordarlo y resolverlo.
+- Capacidad para aplicar las técnicas específicas de tratamiento de datos (integración, transformación, limpieza y validación) para su posterior análisis.
+
+# OBJETIVOS DE LA PRÁCTICA
+
+Los objetivos concretos de esta práctica son:
+- Aprender a aplicar los conocimientos adquiridos y su capacidad de resolución de problemas en entornos nuevos o poco conocidos dentro de contextos más amplios o multidisciplinares.
+- Saber identificar los datos relevantes y los tratamientos necesarios (integración, limpiezay validación) para llevar a cabo un proyecto analítico.
+- Aprender a analizar los datos adecuadamente para abordar la información contenida en los datos.
+- Identificar la mejor representación de los resultados para aportar conclusiones sobre el problema planteado en el proceso analítico.
+- Actuar con los principios éticos y legales relacionados con la manipulación de datos en función del ámbito de aplicación.
+- Desarrollar las habilidades de aprendizaje que les permitan continuar estudiando de un modo que tendrá que ser en gran medida autodirigido o autónomo.
+- Desarrollar la capacidad de búsqueda, gestión y uso de información y recursos en el ámbito de la ciencia de datos. 
+
+# DESCRIPCIÓN DEL DATASET
+
+El dataset escogido representa a las personas que embarcaron en el titanic, el cual naufragó en el Océano del Atlántico Norte el 15 de abril de 1912 al ser impactado por un iceberg. Dado de que vamos a usar dos datasets: Train y test, vamos a unificarlos en un solo dataset para proceder a la limpieza de datos y posterior análisis. El fichero contiene: 1309 observaciones de 12 variables que anteriormente se mencionaron en la descripción del dataset. 
+
+El dataset final contiene las siguientes variables:
+
+-	PassengerID: ID del pasajero.
+-	Survival: Sobreviviente. Está compuesto con 0=No, 1= Yes.
+-	Name: Nombre de los pasajeros
+-	Pclass: Clase del tiquete. Está compuesto con 1 = 1era, 2= 2da, 3 = 3ra.  En donde funciona como proxy del estatus socioeconómico. 1era = Clase alta, 2da= Clase Media, 3ra= Clase Baja. 
+-	Sex: Sexo.
+-	Age: Edad en años. Donde Age es fraccional si es menor a 1. Si la edad es estimada, entonces tiene forma de xx.5.
+-	Sibsp: # de hermanos / pareja dentro del titanic. El dataset define a las relaciones familiares como Sibling= hermano, hermana, hermanastro, hermanastra. Pareja = esposa, esposo (amantes y prometidos fueron ignorados).
+-	Parch: # de padres/hijos dentro del titanic. El dataset define las relaciones familiares como: Parent = madre, padre. Child = Hija, hijo, hijastra, hijastro. Algunos niños viajaron solo con su niñera, por lo tanto, parch= 0 para ellos.
+-	Ticket: Número del tiquete.
+-	Fare: Tarifa del pasajero.
+-	Cabin: Número de la cabina.
+-	Embarked: Puerto de embarcación. Está compuesto por C= Cherbourg, Q = Queenstown, S = Southampton.
+
+******
+# IMPORTANCIA Y OBJETIVOS DEL ANÁLISIS DEL DATASET.
+Hemos escogido el dataset relacionado con las personas que embarcaron el titanic que se encuentra en la página kaggle:  https://www.kaggle.com/competitions/titanic/data en la cual separa los datos en dos datasets: test y train. Donde train.csv contiene los detalles de un subset de los pasajeros a bordo del titanic los cuales son 891 en total y en donde se revelará si sobreviven o no. El test.csv contiene información similar, pero con ella debemos predecir cuál de estas condiciones sucede. El objetivo de esta práctica es predecir si los pasajeros a bordo sobreviven o no y también encontrar si ciertas variables como la pclass que identifica la clase del tiquete influenciaron en la sobrevivencia de los pasajeros y si otras variables entraron como a influenciar de forma más impredecible. 
+
+******
+# INTEGRACIÓN Y SELECCIÓN DE LOS DATOS A ANALIZAR.
+Es importante escoger las variables que consideramos importantes que nos ayudarán en el proceso del análisis del dataset para posteriormente llegar a los objetivos planteados en esta práctica. Dichas variables deben contener la información más relevante que nos ayude llegar a dicho paso y resolver el problema planteado. 
+Al observar el dataset y ver como se comporta las variables podemos reducir la dimensionalidad y también reducir el dataset, eliminando las variables que consideramos que no ayudan a la resolución. En nuestro caso, se eliminará las siguientes variables:
+
+- PassengerID: ID del pasajero.
+-	Name: Nombre de los pasajeros
+-	Ticket: Número del tiquete.
+-	Cabin: Número de la cabina. 
+
+Instalamos los paquetes
+
+Instalamos y cargamos las librarías requeridas.
+
+```{r}
+if (!require(GGally)) install.packages(GGally); library(GGally)
+if (!require('rpart.plot')) install.packages('rpart.plot'); library('rpart.plot')
+if (!require('ggplot2')) install.packages('ggplot2'); library('ggplot2')
+if (!require('rpart')) install.packages('rpart'); library('rpart')
+if (!require('randomForest')) install.packages('randomForest'); library('randomForest')
+if (!require("dplyr")) install.packages("dplyr"); library("dplyr")
+```
+
+Dado de que vamos a usar dos datasets: Train y test, vamos a unificarlos en un solo dataset para proceder luego a la limpieza de datos y posterior análisis. El fichero unificado contiene: 1309 observaciones de 12 variables que anteriormente se mencionaron en la descripción del dataset. Por ahora mantendremos todas las variables para su observación total.
+
+```{r}
+
+test <- read.csv('test.csv',stringsAsFactors = FALSE)
+train <- read.csv('train.csv', stringsAsFactors = FALSE)
+
+# Creamos un nuevo dataset con ambos archivos como se había mencionado anteriormente.
+df <- bind_rows(train,test)
+len_train=dim(train)[1]
+
+```
+
+Hacemos una rápida observación del dataset donde vemos el número de variables y el número de observaciones que ya se ha mencionado. También se puede ver las caracteristicas de las variables del dataset.
+
+```{r}
+str(df)
+```
+
+Observamos las estadisticas principales de las variables:
+```{r}
+summary(df)
+```
+
+Eliminamos variables que no vamos a utilizar:
+
+```{r}
+#Eliminamos PassengerId, Name, Ticket, Cabin,  
+dfaux<-df[,c("Survived","Pclass","Sex","Age","Fare","SibSp","Parch", "Embarked")]
+```
+
+Vemos como quedo:
+```{r}
+summary(dfaux);
+```
+******
+# PROCESO DE LIMPIEZA DE LOS DATOS.
+
+Ahora procederemos a la limpieza de los datos analizando los valores vacios, nulos y los valores extremos u outliers.
+
+## Eliminación de valores nulos y vacios.
+Para comenzar en la limpieza de datos, observamos las variables que contienen valores vacios la cual la razón suele ser porque no se llego a registrar la información. 
+
+```{r}
+# Valores vacios
+colSums(is.na(dfaux))
+colSums(dfaux=="")
+```
+
+Como podemos ver, las variables "Age" y la variable "Embarked" contiene valores vacios. 
+Existen diferentes metodos para poder solucionar este problema. En nuestro caso, utilizaremos el método de reemplazo con la media para dichos valores. En el caso de "Embarked" utilizaremos que vamos a reemplzar los valores vacios con la primera opción que es "S"
+```{r}
+# Tenemos muchos valores vacios en "Age" por lo que lo reemplazaremos con la media.
+dfaux$Age[is.na(dfaux$Age)] <- mean(dfaux$Age, na.rm = TRUE)
+
+# Cambiamos los valores vacios de Embarked por la primera opción que es "S"
+dfaux$Embarked[dfaux$Embarked==""]="S"
+
+```
+
+## Identificación y gestión de valores extremos u outliers.
+
+Los valores extremos u outliers son aquellos valores que se encuentran alejados del resto de observaciones y pueden llegar a ser valores tanto muy pequeños o muy grandes. Para su analisis es necesario tambien comprender las razones del porque se pueden generar este tipo de valores para no eliminarlos y sesgar el analisis afectando el modelo.
+Utlizaremos la herramienta de boxplot.stats para identificar dichos valores.
+
+Primero vamos a convertir las variables de Survived, Pclass, Sex, Embarked a factores dado de que estos valores toman valores finitos:
+
+
+```{r}
+# Convertimos los datos de Survived, Pclass, Sex, Embarked a factores
+
+dfaux$Survived <- as.factor(dfaux$Survived)
+dfaux$Pclass <- as.factor(dfaux$Pclass)
+dfaux$Sex <- as.factor(dfaux$Sex)
+dfaux$Embarked <- as.factor(dfaux$Embarked)
+
+```
+
+Veamos las variables con los valores extremos usando boxplot.stats.
+
+Comenzamos para Edad "Age".
+```{r}
+boxplot.stats(dfaux$Age)$out
+```
+La variable "Pclass"
+```{r}
+boxplot.stats(dfaux$Pclass)$out
+```
+
+La variable "Sex"
+```{r}
+boxplot.stats(dfaux$Sex)$out
+```
+
+La variable "Embarked"
+```{r}
+boxplot.stats(dfaux$Embarked)$out
+```
+
+La variable "Fare"
+```{r}
+boxplot.stats(dfaux$Fare)$out
+```
+
+La variable "Survived"
+```{r}
+boxplot.stats(dfaux$Survived)$out
+```
+
+La variable "SibSp"
+```{r}
+boxplot.stats(dfaux$SibSp)$out
+```
+
+
+La variable "Parch"
+```{r}
+boxplot.stats(dfaux$Parch)$out
+```
+
+Utlizando un diagrama de caja nos dara lo siguiente en forma gráfica:
+
+```{r}
+outliers <- function(dfaux) {
+    par(mfrow=c(1,2))
+    for(i in 1:ncol(dfaux)) {
+        if (is.numeric(dfaux[,i])){
+            boxplot(dfaux[,i], main = colnames(dfaux)[i], width = 100, col="gray")
+        }
+    }
+
+    max(dfaux$Age, na.rm = TRUE)
+    min(dfaux$Age, na.rm = TRUE)
+    fivenum(dfaux$Age)
+
+    max(dfaux$Fare, na.rm = TRUE)
+    min(dfaux$Fare, na.rm = TRUE)
+    fivenum(dfaux$Fare)
+}
+outliers(dfaux)
+```
+
+
+De lo anterior podemos observar que la variable edad tiene valores extremos pero hay que tener en cuenta que las edades comprendidas entre 60 años y 80 años son normales, tambien que una persona tenga 0.92 años ya que representa a un bebe. . Tambien en el caso de Fare, existen tambien valores extremos pero de acuerdo a la cabina comprada puede ser normal dicho precio gastado por los pasajeros. Esto en resumen nos lleva a que no quitaremos los valores extremos porque podemos asegurarnos que son validos dado las condiciones de las variables.
+
+Ahora, eliminamos las variables que nos vamos a utilizar:
+
+
+# ANÁLISIS DE LOS DATOS.
+
+Analizaremos el dataset ya limpio para observar como se comportan las variables. 
+
+## Selección de grupos de datos a analizar.
+
+Agrupamos los datos en grupos:
+
+Agrupamos los datos que se quieren comparar
+
+```{r}
+# Por Cabina
+dfaux.first_class <- dfaux[dfaux$Pclass == 1,] 
+dfaux.second_class <- dfaux[dfaux$Pclass == 2,] 
+dfaux.third_class <- dfaux[dfaux$Pclass == 3,]
+
+print(paste("First_class: ", nrow(dfaux.first_class)))
+print(paste("Second_class: ", nrow(dfaux.second_class)))
+print(paste("Third_class: ", nrow(dfaux.third_class)))
+
+```
+
+
+```{r}
+# Por genero
+dfaux.male <- dfaux[dfaux$Sex == "male",] 
+dfaux.female <- dfaux[dfaux$Sex == "female",]
+
+print(paste("Male: ", nrow(dfaux.male)))
+print(paste("Female: ", nrow(dfaux.female)))
+
+```
+
+
+```{r}
+# Por Embarque
+dfaux.C <- dfaux[dfaux$Embarked == "C",] 
+dfaux.Q <- dfaux[dfaux$Embarked == "Q",] 
+dfaux.S <- dfaux[dfaux$Embarked == "S",] 
+
+print(paste("Cherbourg: ", nrow(dfaux.C)))
+print(paste("Queenstown: ", nrow(dfaux.Q)))
+print(paste("Southampton: ", nrow(dfaux.S)))
+
+```
+
+Primero vamos a graficar las frecuencias usando un barplot con todas las variables y observar como se comportan:
+
+```{r}
+# Gráfica de las Frecuencias de cada una de las variables del dataset
+dataaux<-layout(matrix(c(1,2,3,4,5,5), 2, 3, byrow=TRUE),respect=TRUE);
+barplot(prop.table(table(dfaux$Sex)),ylim=c(0,0.7), main="Sex");
+barplot(prop.table(table(dfaux$Pclass)),ylim=c(0,0.7), main="Class");
+barplot(prop.table(table(dfaux$Fare)),ylim=c(0,0.7), main="Fare");
+barplot(prop.table(table(dfaux$Survived)),ylim=c(0,0.7), main="Survived");
+barplot(prop.table(table(dfaux$Embarked)),ylim=c(0,1), main="Embarked");
+barplot(prop.table(table(dfaux$Parch)),ylim=c(0,1), main="Parch");
+barplot(prop.table(table(dfaux$SibSp)),ylim=c(0,1), main="SibSp");
+barplot(prop.table(table(dfaux$Age)),ylim=c(0,0.05), main="Edad");
+```
+
+Ahora vamos a observamos las correlaciones de ellas usando varias grñaficas como el scatterplot, las distribuciones y el coeficiente de correlación.
+```{r}
+# Vemos las correlaciones (usando scatterplots), distribuciones e imprimimos el coeficiente de correlacion
+ggpairs(dfaux, title="correlograma con ggpairs()") 
+
+```
+
+##	Comprobación de la normalidad y homogeneidad de la varianza.
+
+Ya que hemos anterioremente agrupado las variables, podemos realizar la comprobación de la homogeneidad con la función de Fligner- Killeen la cual es un test no parametrico para la homogeneidad de un grupo de varianzas basada en rangos.
+
+```{r}
+varianza <- fligner.test(dfaux);
+varianza;
+
+```
+
+Esto nos trae como conclusión que p-value < 2.2e-16 lo que las varianzas de las variables son diferentes.
+
+Ahora, en el caso de la normalidad, vamos a hacer el analisis con dos variables, es decir, survived, y otra variable.
+
+**Relación entre Sex y survival**
+Podemos observar que alrededor del 75% de las mujeres fueron sobrevivientes del naufragio mientras que hay un procentaje menor de sobrevivientes hombres con menos del 23%.
+```{r}
+# Comprobación de la normalidad. 
+#Vamos a ver la relación entre sex y survival.
+ggplot(data=dfaux[1:len_train,],aes(x=Sex,fill=Survived))+geom_bar(position="fill")+ylab("Frequency")
+
+```
+
+
+**Relación entre Embarked y survival**
+
+Los pasajeros que más sobrevivieron fueron los que los embarcaron desde Cherbourg con alrededor del 56%, alrededor del 38% que arrivaron en Queenstown sobrevivieron, y alrededor del 35% que embarcaron en S = Southampton sobrevivieron.
+```{r}
+# Survival como función de embarked:
+ggplot(data = dfaux[1:len_train,],aes(x=Embarked,fill=Survived))+geom_bar(position="fill")+ylab("Frequency")
+```
+
+**Relación entre PClass y survival**
+
+Podemos observar que alrededor de la clase 1 el 63% fueron sobrevievientes, De la clase 2, alrededor del 48% sobrevivieron y de la clase 3 del 25% sobrevivieron.
+```{r}
+# Survival como función de Pclass:
+ggplot(data = dfaux[1:len_train,],aes(x=Pclass,fill=Survived))+geom_bar(position="fill")+ylab("Frequency")
+```
+
+
+**Relación entre SibSp y survival**
+
+```{r}
+# Survivial as a function of SibSp 
+ggplot(data = dfaux[1:len_train,],aes(x=SibSp,fill=Survived))+geom_bar(position="fill")+ylab("Frequency")
+
+```
+
+**Relación entre Parch y survival**
+
+```{r}
+# Survivial como función de  Parch
+ggplot(data = dfaux[1:len_train,],aes(x=Parch,fill=Survived))+geom_bar(position="fill")+ylab("Frequency")
+
+```
+
+**Relación entre Age y survival**
+
+```{r}
+# Survival as a function of age:
+
+ggplot(data = dfaux[1:len_train,],aes(x=Age,fill=Survived))+geom_histogram(binwidth =3, position="fill")
+
+```
+
+**Relación entre Fare y survival**
+
+```{r}
+
+# Correlación entre Fare y Survival
+ggplot(data = dfaux[1:len_train,],aes(x=Fare,fill=Survived))+geom_histogram(binwidth =20, position="fill")
+
+```
+
+Si vemos la influencia de la edad, el sexo y la clase en los sobrevivientes tendriamos:
+
+Anteriormente habiamos hecho subset de las variables como agrupación de datos pero ahora lo haremos con relación al Pclass.
+Primero agrupamos por pclass:
+
+```{r}
+
+# Agregamos las variables que queremos estudiar que influyen la sobrevivencia como sex y age, con Pclass
+sex_tot=aggregate(dfaux$Pclass, by=list(sex=dfaux$Sex, pclass=dfaux$Pclass), FUN=function(x){NROW(x)});
+Pclass_tot=aggregate(dfaux$Pclass, by=list(pclass=dfaux$Pclass), FUN=function(x){NROW(x)});
+age_tot=aggregate(dfaux$Pclass, by=list(age=dfaux$Age, pclass=dfaux$Pclass), FUN=function(x){NROW(x)});
+
+# Hacemos un subset basado en los valores de sex
+
+men<-subset(sex_tot, sex=='male');
+women<-subset(sex_tot, sex=='female');
+
+# Ahora vemos el porcentaje de hombres y mujeres.
+men$percentage <- round(prop.table(men$x),4)*100;
+women$percentage <- round(prop.table(women$x),4)*100;
+
+#Sacamos el subset de edad basado en Pclass.
+class1<-subset(age_tot, pclass=='1');
+class2<-subset(age_tot, pclass=='2');
+class3<-subset(age_tot, pclass=='3');
+
+```
+
+
+
+```{r}
+
+# Vamos a graficar lo anterior en relación a la pclass. Utilizaremos el histrograma, el barplot y el qqnorm con qqline
+data1<-layout(matrix(c(1,2,3,4,5,6), 2, 3, byrow=TRUE),respect=TRUE);
+
+hist(class1$age, main="(d) Histograma 1ra Clase");
+hist(class2$age, main="(e) Histograma 2da Clase");
+hist(class3$age, main="(f) Histograma 3ra Clase");
+
+```
+
+```{r}
+
+# Usando el barplot
+data1<-layout(matrix(c(1,2,3,4,5,6), 2, 3, byrow=TRUE),respect=TRUE);
+
+barplot(class1$x, main="First class frequency");
+barplot(class2$x, main=" Second class frequency");
+barplot(class3$x, main="Third class Frequency");
+
+```
+
+```{r}
+
+# Usando el qqnorm con qqline
+data1<-layout(matrix(c(1,2,3,4,5,6), 2, 3, byrow=TRUE),respect=TRUE);
+
+qqnorm(class1$age, main="First class Normal distribution");
+qqline(class1$age);
+qqnorm(class2$age, main="Second class Normal distribution");
+qqline(class2$age);
+qqnorm(class3$age, main= "Third class Normal distribution");
+qqline(class3$age);
+```
+
+Con los gráficos anteriores podemos encontrar que poseen una distribución normal. 
+
+## APLICACIÓN DE PRUEBAS ESTADISTICAS.
+Vamos a aplicar ahora pruebas estadisticas para observar cuales son las variables que influyen más en la sobrevivencia de los pasajeros y cual seria la sobrevivencia de los pasajeros aplicando modelos. En nuestro caso, utilizaremos de nuevo nuestros dataset del train y del test. Aquí aplicaremos el metodo del arbol de decisión pero primero realizaremos la regresión logistica.
+
+```{r}
+
+# Seleccionamos de nuevo los datos de train y test y escogemos las variables que vamos a utilizar
+train<-dfaux[1:len_train,c("Survived","Pclass","Sex","Age","Fare","SibSp","Parch", "Embarked")]
+
+len_test<-dim(test)[1]
+test<-tail(dfaux,len_test)
+test<-test[,c("Survived","Pclass","Sex","Age","Fare","SibSp","Parch", "Embarked")]
+
+
+# Hacemos un regresion logistica
+
+model <- glm(Survived ~.,family=binomial(link='logit'),data=train)
+summary(model)
+```
+
+Vamos a realizar la predicción de los sobrevievientes con nuestro modelo con el dataset del train.
+```{r}
+# Ahora, vemos la prediccion de los sobrevivientes
+
+pred.train <- predict(model,train)
+pred.train <- ifelse(pred.train > 0.5,1,0)
+
+# Media de la prediccion verdadera 
+mean(pred.train==train$Survived)
+```
+
+
+```{r}
+t1<-table(pred.train,train$Survived)
+# precisión y recall del modelo
+precision<- t1[1,1]/(sum(t1[1,]))
+recall<- t1[1,1]/(sum(t1[,1]))
+precision
+```
+
+
+```{r}
+recall
+
+# F1 score
+F1<- 2*precision*recall/(precision+recall)
+F1
+
+```
+
+
+Vamos a ver el accuracy de nuestro modelo. 
+```{r}
+table(train$Survived, pred.train >= 0.5)
+
+accuracy = (244 + 458) / nrow(train)
+sensitivity = 244 / (244 + 98)
+specificity = 458 / (458 + 91)
+
+cat("accuracy: ", accuracy)
+
+```
+
+# REPRESENTACIÓN GRÁFICA DE LOS RESULTADOS A PARTIR DE TABLAS Y GRÁFICAS
+
+Existen diferentes gráficas para usar como modelos de prediccion. Uno de ellos es el arbol de decisión el cual se busca predecir la probabilidad de que se llegue el objetivo en base a ciertas condiciones. 
+Usamos en nuestro caso para representar los resultados, un arbol de decisión el cual al comienzo transforma la variable survived para que a partir de sexo puede ir ramificandose la resolución al problema.
+
+Gráficamos con rpart.plot el arbol de desición donde se puede varios niveles.
+
+
+```{r}
+# Representamos el arbol de decision
+model_dt<- rpart(Survived ~.,data=train, method="class")
+rpart.plot(model_dt)
+```
+
+
+Como quedaría el arbol:
+```{r}
+# Vemos como queda el arbol
+model_dt
+```
+
+Podemos tambien exportar los resultados de la predicción en un archivo csv.
+```{r}
+
+pred.test <- predict(model,test)
+pred.test <- ifelse(pred.test > 0.5,1,0)
+
+pred.test
+test$Survived<- pred.test
+
+write.csv(pred.test,file="prediction.csv",row.names = F)
+
+```
+
+Tambien se exporta el archivo ya limpio.
+
+```{r}
+
+write.csv(dfaux,file="archivolimpio.csv",row.names = F)
+
+```
+
+# RESOLUCIÓN DE PROBLEMAS Y CONCLUSIONES
+
+Con el uso de arboles de decisión para la resolución de nuestro problema en cuanto a la sobrevivencia de los pasajeros y el impacto de ciertas variables en ella, hemos encontrado que nos trae los siguientes resultados comprendidos en varios niveles:
+
+- si es hombre (male) y tiene una edad Age>=6.5 entonces muere
+- Si es hombre (male) y tiene una edad Age< 6.5 y SibSp>=2.5 entonces muere
+- Si es hombre (male) y tiene una edad Age< 6.5 y SibSp<2.5 entonces sobrevive
+- si es mujer (female) y pclass< 3 entonces sobrevive
+- si es mujer (female), Pclass=3, Fare>=23.35, entonces muere
+- si es mujer (female), Pclass=3, Fare< 23.35, Age>=36.5 entonces muere
+- si es mujer (female), Pclass=3, Fare< 23.35, Age< 36.5 entonces sobrevive
+
+Se puede observar que vcon estos resultados llegamos a la conclusión de que no hay influencia de las clases en los hombres en donde hay prioridad a los niños menores de 6.5 años y que tienen una cantidad menor de hermanos. En el caso de los hombres, la supervivencia es muy pequeña a diferencia de las mujeres. En el caso de las mujeres, vemos que las clase 1 y 2 que son consideradas alta y media, sobreviven, los que nos demuestra que juega un papel importante el aspecto socioeconomico en la supervivencia. En el caso de las mujeres con la pclass 3, que es la baja, entra los factores en donde cuando son menores de 36.5 años sobreviven. De aquí podría comprobarse la teoría de mujeres y niños/as primero son los que más probabilidades tuvieron de sobrevivir en el titanic. Se observa tambien que la variable **pclass** tiene una influencia mucho mayor que las otras variables como anteriormente se había mencionado. 
+
+# EXPORTACIÓN DEL CÓDIGO
+
+En el github se puede observar el archivo subido con el código realizado en el programa r. Tambien se encuentra en el github los archivos csv de los dataset, el dataset limpio y el de las predicciones.
+
+- Mejia Quintero Dayana: https://github.com/danamejia1810/Practica-2-Titanic-dataset.git
+- Peterson Christopher: https://github.com/christopherapeterson/Practica-2-Titanic-dataset.git
+
+# BIBLIOGRAFÍA
+
+- Calvo M, Subirats L, Pérez D (2019). Introducción a la limpieza y análisis de los datos. Editorial UOC.
+- Dalgaard, Peter (2008). Introductory statistics with R. Springer Science & Business Media.
+- Jiawei Han, Micheine Kamber, Jian Pei (2012). Data mining: concepts and techniques. Morgan Kaufmann.
+- Osborne, Jaso W. (2010). Data Cleaning Basics: Best Practices in Dealing with Extreme Scores. Newborn and Infant Nursing Reviews; 10 (1): pp. 1527-3369.
+- Squire, Megan (2015). Clean Data. Packt Publishing Ltd.
+- Wes McKinney (2012). Python for Data Analysis. O’Reilley Media, Inc.
