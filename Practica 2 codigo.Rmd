@@ -1,0 +1,429 @@
+---
+title: "Práctica 2: Limpieza y validación de los datos"
+author: "Mejía Quintero Dayana, Peterson Christopher"
+date: "Junio 2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Pratica 2: Tipología y ciclo de vida de los datos
+
+
+## Cargamos los datos y las librerias.
+
+Instalamos y cargamos las librarías requeridas.
+
+```{r}
+if (!require(GGally)) install.packages(GGally); library(GGally)
+if (!require('rpart.plot')) install.packages('rpart.plot'); library('rpart.plot')
+if (!require('ggplot2')) install.packages('ggplot2'); library('ggplot2')
+if (!require('rpart')) install.packages('rpart'); library('rpart')
+if (!require('randomForest')) install.packages('randomForest'); library('randomForest')
+if (!require("dplyr")) install.packages("dplyr"); library("dplyr")
+```
+
+Leemos los archivos que estan en formato csv y los unimos en un nuevo dataset.
+
+```{r}
+
+test <- read.csv('test.csv',stringsAsFactors = FALSE)
+train <- read.csv('train.csv', stringsAsFactors = FALSE)
+
+# Creamos un nuevo dataset con ambos archivos como se había mencionado anteriormente.
+df <- bind_rows(train,test)
+len_train=dim(train)[1]
+
+```
+
+## Descripción del dataset
+
+Vemos que hay que cambiar algunos de las columnas a numeric. Hacemos tambien una rápida observación del dataset para escoger las variables que vamos a utilizar y las que vamos a eliminar posteriormente.
+```{r}
+str(df)
+```
+
+Observamos las estadisticas principales de las variables:
+```{r}
+summary(df)
+```
+Eliminamos variables que no vamos a utilizar:
+
+```{r}
+#Eliminamos PassengerId, Name, Ticket, Cabin,  
+dfaux<-df[,c("Survived","Pclass","Sex","Age","Fare","SibSp","Parch", "Embarked")]
+```
+
+Vemos como quedo:
+```{r}
+summary(dfaux);
+```
+## Limpieza de datos
+
+### Valores Nulos y vacios
+```{r}
+# Valores vacios
+colSums(is.na(dfaux))
+colSums(df=="")
+```
+
+```{r}
+# Tenemos muchos valores vacios en "Age" por lo que lo reemplazaremos con la media.
+dfaux$Age[is.na(dfaux$Age)] <- mean(dfaux$Age, na.rm = TRUE)
+
+# Cambiamos los valores vacios de Embarked por la primera opción que es "S"
+dfaux$Embarked[dfaux$Embarked==""]="S"
+
+```
+
+### Conversiones
+
+
+```{r}
+# Convertimos los datos de Survived, Pclass, Sex, Embarked a factores
+
+dfaux$Survived <- as.factor(dfaux$Survived)
+dfaux$Pclass <- as.factor(dfaux$Pclass)
+dfaux$Sex <- as.factor(dfaux$Sex)
+dfaux$Embarked <- as.factor(dfaux$Embarked)
+
+```
+
+### Valores extremos
+Veamos las variables que cuentan con los valores extremos usando boxplot.stats.
+
+Comenzamos para Edad "Age".
+```{r}
+boxplot.stats(dfaux$Age)$out
+```
+La variable "Pclass"
+```{r}
+boxplot.stats(dfaux$Pclass)$out
+```
+
+La variable "Sex"
+```{r}
+boxplot.stats(dfaux$Sex)$out
+```
+
+La variable "Embarked"
+```{r}
+boxplot.stats(dfaux$Embarked)$out
+```
+
+La variable "Fare"
+```{r}
+boxplot.stats(dfaux$Fare)$out
+```
+
+La variable "Survived"
+```{r}
+boxplot.stats(dfaux$Survived)$out
+```
+
+La variable "SibSp"
+```{r}
+boxplot.stats(dfaux$SibSp)$out
+```
+
+
+La variable "Parch"
+```{r}
+boxplot.stats(dfaux$Parch)$out
+```
+Graficamente podriamos tener:
+
+```{r}
+outliers <- function(dfaux) {
+    par(mfrow=c(1,2))
+    for(i in 1:ncol(dfaux)) {
+        if (is.numeric(dfaux[,i])){
+            boxplot(df[,i], main = colnames(dfaux)[i], width = 100, col="blue")
+        }
+    }
+
+    max(dfaux$Age, na.rm = TRUE)
+    min($dfauxAge, na.rm = TRUE)
+    fivenum(dfaux$Age)
+
+    max(dfaux$Fare, na.rm = TRUE)
+    min(dfaux$Fare, na.rm = TRUE)
+    fivenum(dfaux$Fare)
+}
+outliers(dfaux)
+```
+
+No vamos a quitar los valores extremos porque podemos asegurarnos que son validos dado las condiciones de las variables.
+
+
+
+## Analisis de datos
+
+Agrupamos los datos que se quieren comparar
+
+```{r}
+# Por Cabina
+dfaux.first_class <- dfaux[dfaux$Pclass == 1,] 
+dfaux.second_class <- dfaux[dfaux$Pclass == 2,] 
+dfaux.third_class <- dfaux[dfaux$Pclass == 3,]
+
+print(paste("First_class: ", nrow(dfaux.first_class)))
+print(paste("Second_class: ", nrow(dfaux.second_class)))
+print(paste("Third_class: ", nrow(dfaux.third_class)))
+
+```
+
+
+```{r}
+# Por genero
+dfaux.male <- dfaux[dfaux$Sex == "male",] 
+dfaux.female <- dfaux[dfaux$Sex == "female",]
+
+print(paste("Male: ", nrow(dfaux.male)))
+print(paste("Female: ", nrow(dfaux.female)))
+
+```
+
+
+```{r}
+# Por Embarque
+dfaux.C <- dfaux[dfaux$Embarked == "C",] 
+dfaux.Q <- dfaux[dfaux$Embarked == "Q",] 
+dfaux.S <- dfaux[dfaux$Embarked == "S",] 
+
+print(paste("Cherbourg: ", nrow(dfaux.C)))
+print(paste("Queenstown: ", nrow(dfaux.Q)))
+print(paste("Southampton: ", nrow(dfaux.S)))
+
+```
+Graficamos ahora las frecuencias usando un barplot
+
+```{r}
+# Gráfica de las Frecuencias de cada una de las variables del dataset
+dataaux<-layout(matrix(c(1,2,3,4,5,5), 2, 3, byrow=TRUE),respect=TRUE);
+barplot(prop.table(table(dfaux$Sex)),ylim=c(0,0.7), main="Sex");
+barplot(prop.table(table(dfaux$Pclass)),ylim=c(0,0.7), main="Class");
+barplot(prop.table(table(dfaux$Fare)),ylim=c(0,0.7), main="Fare");
+barplot(prop.table(table(dfaux$Survived)),ylim=c(0,0.7), main="Survived");
+barplot(prop.table(table(dfaux$Embarked)),ylim=c(0,1), main="Embarked");
+barplot(prop.table(table(dfaux$Parch)),ylim=c(0,1), main="Parch");
+barplot(prop.table(table(dfaux$SibSp)),ylim=c(0,1), main="SibSp");
+barplot(prop.table(table(dfaux$Age)),ylim=c(0,0.05), main="Edad");
+```
+
+Observamos las correlaciones 
+```{r}
+# Vemos las correlaciones (usando scatterplots), distribuciones e imprimimos el coeficiente de correlacion
+ggpairs(dfaux, title="correlograma con ggpairs()") 
+
+```
+
+##	Comprobación de la normalidad y homogeneidad de la varianza.
+
+```{r}
+# Comprobación de la homogeneidad
+varianza <- fligner.test(dfaux);
+varianza;
+
+```
+
+```{r}
+
+# Comprobación de la normalidad. 
+#Vamos a ver la relación entre sex y survival.
+ggplot(data=dfaux[1:len_train,],aes(x=Sex,fill=Survived))+geom_bar(position="fill")+ylab("Frequency")
+
+```
+
+
+```{r}
+# Survival como función de embarked:
+ggplot(data = dfaux[1:len_train,],aes(x=Embarked,fill=Survived))+geom_bar(position="fill")+ylab("Frequency")
+```
+
+```{r}
+# Survival como función de Pclass:
+ggplot(data = dfaux[1:len_train,],aes(x=Pclass,fill=Survived))+geom_bar(position="fill")+ylab("Frequency")
+```
+
+
+```{r}
+# Survivial as a function of SibSp 
+ggplot(data = dfaux[1:len_train,],aes(x=SibSp,fill=Survived))+geom_bar(position="fill")+ylab("Frequency")
+
+```
+```{r}
+# Survivial como función de  Parch
+ggplot(data = dfaux[1:len_train,],aes(x=Parch,fill=Survived))+geom_bar(position="fill")+ylab("Frequency")
+
+```
+
+```{r}
+# Survival as a function of age:
+
+ggplot(data = dfaux[1:len_train,],aes(x=Age,fill=Survived))+geom_histogram(binwidth =3, position="fill")
+
+
+```
+
+
+```{r}
+
+# Correlación entre Fare y Survival
+ggplot(data = dfaux[1:len_train,],aes(x=Fare,fill=Survived))+geom_histogram(binwidth =20, position="fill")
+
+```
+Si vemos la influencia de la edad, el sexo y la clase en los sobrevivientes tendriamos:
+
+Anteriormente habiamos hecho subset de las variables como agrupación de datos pero ahora lo haremos con relación al Pclass.
+Primero agrupamos por pclass:
+
+```{r}
+
+# Agregamos las variables que queremos estudiar que influyen la sobrevivencia como sex y age, con Pclass
+sex_tot=aggregate(dfaux$Pclass, by=list(sex=dfaux$Sex, pclass=dfaux$Pclass), FUN=function(x){NROW(x)});
+Pclass_tot=aggregate(dfaux$Pclass, by=list(pclass=dfaux$Pclass), FUN=function(x){NROW(x)});
+age_tot=aggregate(dfaux$Pclass, by=list(age=dfaux$Age, pclass=dfaux$Pclass), FUN=function(x){NROW(x)});
+
+# Hacemos un subset basado en los valores de sex
+
+men<-subset(sex_tot, sex=='male');
+women<-subset(sex_tot, sex=='female');
+
+# Ahora vemos el porcentaje de hombres y mujeres.
+men$percentage <- round(prop.table(men$x),4)*100;
+women$percentage <- round(prop.table(women$x),4)*100;
+
+#Sacamos el subset de edad basado en Pclass.
+class1<-subset(age_tot, pclass=='1');
+class2<-subset(age_tot, pclass=='2');
+class3<-subset(age_tot, pclass=='3');
+
+```
+
+
+
+```{r}
+
+# Vamos a graficar lo anterior en relación a la pclass. Utilizaremos el histrograma, el barplot y el qqnorm con qqline
+data1<-layout(matrix(c(1,2,3,4,5,6), 2, 3, byrow=TRUE),respect=TRUE);
+
+hist(class1$age, main="(d) Histograma 1ra Clase");
+hist(class2$age, main="(e) Histograma 2da Clase");
+hist(class3$age, main="(f) Histograma 3ra Clase");
+
+```
+```{r}
+
+# Usando el barplot
+data1<-layout(matrix(c(1,2,3,4,5,6), 2, 3, byrow=TRUE),respect=TRUE);
+
+barplot(class1$x, main="First class frequency");
+barplot(class2$x, main=" Second class frequency");
+barplot(class3$x, main="Third class Frequency");
+
+```
+
+```{r}
+
+# Usando el qqnorm con qqline
+data1<-layout(matrix(c(1,2,3,4,5,6), 2, 3, byrow=TRUE),respect=TRUE);
+
+qqnorm(class1$age, main="First class Normal distribution");
+qqline(class1$age);
+qqnorm(class2$age, main="Second class Normal distribution");
+qqline(class2$age);
+qqnorm(class3$age, main= "Third class Normal distribution");
+qqline(class3$age);
+```
+Con los gráficos anteriores podemos encontrar que poseen una distribución normal. 
+
+## *Aplicación de pruebas estadísticas.*
+
+## Modelos Supervisados
+
+```{r}
+
+# Seleccionamos de nuevo los datos de train y test y escogemos las variables que vamos a utilizar
+train<-dfaux[1:len_train,c("Survived","Pclass","Sex","Age","Fare","SibSp","Parch", "Embarked")]
+
+len_test<-dim(test)[1]
+test<-tail(dfaux,len_test)
+test<-test[,c("Survived","Pclass","Sex","Age","Fare","SibSp","Parch", "Embarked")]
+
+
+# Hacemos un regresion logistica
+
+model <- glm(Survived ~.,family=binomial(link='logit'),data=train)
+summary(model)
+```
+
+```{r}
+# Ahora, vemos la prediccion de los sobrevivientes con el dataset del train
+
+pred.train <- predict(model,train)
+pred.train <- ifelse(pred.train > 0.5,1,0)
+
+# Media de la prediccion verdadera 
+mean(pred.train==train$Survived)
+```
+
+```{r}
+t1<-table(pred.train,train$Survived)
+# precisión y recall del modelo
+precision<- t1[1,1]/(sum(t1[1,]))
+recall<- t1[1,1]/(sum(t1[,1]))
+presicion
+```
+
+```{r}
+recall
+
+# F1 score
+F1<- 2*precision*recall/(precision+recall)
+F1
+
+```
+
+```{r}
+table(train$Survived, pred.train >= 0.5)
+
+accuracy = (244 + 458) / nrow(train)
+sensitivity = 244 / (244 + 98)
+specificity = 458 / (458 + 91)
+
+cat("accuracy: ", accuracy)
+
+```
+## **Representación de los resultados a partir de tablas y gráficas**
+```{r}
+# Representamos el arbol de decision
+model_dt<- rpart(Survived ~.,data=train, method="class")
+rpart.plot(model_dt)
+```
+```{r}
+# Vemos como queda el arbol
+model_dt
+```
+Exportamos los resultados de la prediccion:
+```{r}
+
+pred.test <- predict(model,test)
+pred.test <- ifelse(pred.test > 0.5,1,0)
+
+pred.test
+test$Survived<- pred.test
+
+write.csv(pred.test,file="prediction.csv",row.names = F)
+
+```
+
+Tambien se exporta el archivo ya limpio.
+
+```{r}
+
+write.csv(dfaux,file="archivolimpio.csv",row.names = F)
+
+```
