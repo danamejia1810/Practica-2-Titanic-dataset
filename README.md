@@ -10,10 +10,13 @@ y análisis de las mismas.
 
 Esta practica se realiza para el master de ciencia de datos de la UOC de la asignatura de Tipología y ciclo de vida de los datos.  
 
-Se compone de: el código realizado, un documento donde se explica el proceso realizado en la practica, el dataset limpio, el dataset con la predicción, el dataset original que está comprendido en los archivos csv de train y test.
+# Composición de los archivos
+El código realizado llamado *Practica 2 codigo.rmd* realizado en el programa r, un documento donde se explica el proceso realizado en la practica *Practica 2.pdf*, el dataset con el proceso de limpieza hecho llamado *archivolimpio.csv*, el dataset con la predicción llamado *prediction.csv*, el dataset original que está comprendido en los archivos csv de *train.csv* y *test.csv*
 
+# Descripción
 Se usa el dataset de la página de kaggle: Titanic: Machine Learning from Disaster (https://www.kaggle.com/c/titanic)
-Competencias
+
+# Competencias
 En esta práctica se desarrollan las siguientes competencias del Máster de Data Science:
 - Capacidad de analizar un problema en el nivel de abstracción adecuado a cada situación y aplicar las habilidades y conocimientos adquiridos para abordarlo y resolverlo.
 - Capacidad para aplicar las técnicas específicas de tratamiento de datos (integración, transformación, limpieza y validación) para su posterior análisis.
