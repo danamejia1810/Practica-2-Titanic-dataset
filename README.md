@@ -9,7 +9,9 @@ En esta práctica se elabora un caso práctico orientado a aprender a identifica
 y análisis de las mismas.
 
 Esta practica se realiza para el master de ciencia de datos de la UOC de la asignatura de Tipología y ciclo de vida de los datos.  
-Se compone de: el código realizado, un documento donde se explica el proceso realizado en la practica, el dataset limpio, el dataset con la predicción, el dataset original.
+
+Se compone de: el código realizado, un documento donde se explica el proceso realizado en la practica, el dataset limpio, el dataset con la predicción, el dataset original que está comprendido en los archivos csv de train y test.
+
 Se usa el dataset de la página de kaggle: Titanic: Machine Learning from Disaster (https://www.kaggle.com/c/titanic)
 Competencias
 En esta práctica se desarrollan las siguientes competencias del Máster de Data Science:
