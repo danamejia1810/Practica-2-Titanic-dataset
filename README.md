@@ -4,7 +4,7 @@ Autores:
 - Peterson Christopher
  
 
-Presentación
+# Presentación
 En esta práctica se elabora un caso práctico orientado a aprender a identificar los datos relevantes para un proyecto analítico y usar las herramientas de integración, limpieza, validación
 y análisis de las mismas.
 
@@ -16,7 +16,7 @@ En esta práctica se desarrollan las siguientes competencias del Máster de Data
 ● Capacidad de analizar un problema en el nivel de abstracción adecuado a cada situación y aplicar las habilidades y conocimientos adquiridos para abordarlo y resolverlo.
 ● Capacidad para aplicar las técnicas específicas de tratamiento de datos (integración, transformación, limpieza y validación) para su posterior análisis.
 
-Objetivos
+# Objetivos
 Los objetivos concretos de esta práctica son:
 ● Aprender a aplicar los conocimientos adquiridos y su capacidad de resolución de problemas en entornos nuevos o poco conocidos dentro de contextos más amplios o
 multidisciplinares.
