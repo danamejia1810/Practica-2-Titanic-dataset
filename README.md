@@ -27,7 +27,7 @@ multidisciplinares.
 - Desarrollar las habilidades de aprendizaje que les permitan continuar estudiando de un modo que tendrá que ser en gran medida autodirigido o autónomo.
 - Desarrollar la capacidad de búsqueda, gestión y uso de información y recursos en el ámbito de la ciencia de datos. 
 
-# BIBLIOGRAFÍA
+# Bibliografía
 
 - Calvo M, Subirats L, Pérez D (2019). Introducción a la limpieza y análisis de los datos. Editorial UOC.
 - Dalgaard, Peter (2008). Introductory statistics with R. Springer Science & Business Media.
