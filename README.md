@@ -11,7 +11,11 @@ y análisis de las mismas.
 Esta practica se realiza para el master de ciencia de datos de la UOC de la asignatura de Tipología y ciclo de vida de los datos.  
 
 # Composición de los archivos
-El código realizado llamado *Practica 2 codigo.rmd* realizado en el programa r, un documento donde se explica el proceso realizado en la practica *Practica 2.pdf*, el dataset con el proceso de limpieza hecho llamado *archivolimpio.csv*, el dataset con la predicción llamado *prediction.csv*, el dataset original que está comprendido en los archivos csv de *train.csv* y *test.csv*
+- El código realizado llamado *Practica 2 codigo.rmd* realizado en el programa r
+- Un documento pdf donde se explica el proceso realizado en la practica *Practica 2.pdf*
+- El dataset con el proceso de limpieza hecho llamado *archivolimpio.csv*
+- El dataset con la predicción llamado *prediction.csv*
+- El dataset original que está comprendido en los archivos csv de *train.csv* y *test.csv*
 
 # Descripción
 Se usa el dataset de la página de kaggle: Titanic: Machine Learning from Disaster (https://www.kaggle.com/c/titanic)
